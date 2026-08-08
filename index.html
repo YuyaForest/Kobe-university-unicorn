@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ユニコーンゲットだぜ！</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+      background: linear-gradient(135deg, #a8ebd9 0%, #ffc6ff 50%, #ffffd1 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #4a4a4a;
+      padding: 20px;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      padding: 30px;
+      border-radius: 28px;
+      box-shadow: 0 15px 35px rgba(186, 104, 200, 0.25);
+      text-align: center;
+      max-width: 540px;
+      width: 100%;
+      border: 4px solid #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    h1 {
+      font-size: 28px;
+      color: #ff4081;
+      margin-bottom: 15px;
+      text-shadow: 2px 2px 4px rgba(255, 182, 193, 0.4);
+    }
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(90deg, #fff0f5, #f3e5f5);
+      padding: 12px 20px;
+      border-radius: 50px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      border: 2px solid #ea80fc;
+      gap: 10px;
+    }
+    .status-item {
+      font-size: 15px;
+      font-weight: bold;
+      color: #d81b60;
+    }
+    .highlight {
+      color: #7b1fa2;
+      font-size: 18px;
+    }
+    .timer-danger {
+      color: #ff1744 !important;
+      animation: pulse 0.5s infinite alternate;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.15); }
+    }
+    .reset-btn {
+      background: linear-gradient(45deg, #ff4081, #ff80ab);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      font-size: 15px;
+      font-weight: bold;
+      border-radius: 25px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(255, 64, 129, 0.4);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .reset-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 6px 20px rgba(255, 64, 129, 0.6);
+    }
+    .reset-btn:active {
+      transform: translateY(0) scale(1);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 10px;
+    }
+    /* 卵が埋まる可愛い芝生ガーデン風の穴 */
+    .hole {
+      aspect-ratio: 1 / 1.25;
+      background: linear-gradient(180deg, #7ccf96 0%, #58b374 100%);
+      border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+      position: relative;
+      overflow: visible;
+      cursor: pointer;
+      box-shadow: inset 0 8px 12px rgba(0,0,0,0.2), 0 8px 15px rgba(88, 179, 116, 0.4);
+      border: 4px solid #4caf50;
+    }
+    /* 卵コンテナ */
+    .egg-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+      overflow: hidden;
+    }
+    /* 上の卵の殻 */
+    .egg-top {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 53%;
+      background: linear-gradient(135deg, #ffffff 0%, #fff0f3 60%, #ffd6e0 100%);
+      clip-path: polygon(0 0, 100% 0, 100% 75%, 83% 100%, 66% 75%, 50% 100%, 33% 75%, 16% 100%, 0 75%);
+      z-index: 3;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border-top-left-radius: 60px;
+      border-top-right-radius: 60px;
+      filter: drop-shadow(0 3px 2px rgba(0,0,0,0.15));
+    }
+    /* 下の卵の殻 */
+    .egg-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 53%;
+      background: linear-gradient(135deg, #fff5f7 0%, #ffccd5 60%, #ffb3c6 100%);
+      clip-path: polygon(0 25%, 16% 0, 33% 25%, 50% 0, 66% 25%, 83% 0, 100% 25%, 100% 100%, 0 100%);
+      z-index: 3;
+      border-bottom-left-radius: 50px;
+      border-bottom-right-radius: 50px;
+      filter: drop-shadow(0 -2px 2px rgba(0,0,0,0.1));
+    }
+    /* ユニコーン */
+    .mole {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -30%) scale(0.7);
+      font-size: 54px;
+      z-index: 2;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      opacity: 0;
+      user-select: none;
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.2));
+    }
+    /* 卵が開くエフェクト */
+    .hole.up .egg-top {
+      transform: translateY(-28px) rotate(-6deg);
+    }
+    .hole.up .mole {
+      transform: translate(-50%, -75%) scale(1.1);
+      opacity: 1;
+    }
+    /* ヒットアニメーション */
+    .mole.hit {
+      animation: hit-anim 0.35s ease-out;
+    }
+    @keyframes hit-anim {
+      0% { transform: translate(-50%, -75%) scale(1.1) rotate(0deg); }
+      40% { transform: translate(-50%, -90%) scale(1.35) rotate(-15deg); }
+      100% { transform: translate(-50%, -75%) scale(1.1) rotate(0deg); }
+    }
+    /* ゲームオーバーモーダル */
+    .game-over-modal {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      padding: 20px;
+    }
+    .game-over-modal.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .game-over-title {
+      font-size: 30px;
+      color: #ff4081;
+      margin-bottom: 10px;
+    }
+    .game-over-score {
+      font-size: 20px;
+      color: #7b1fa2;
+      margin-bottom: 18px;
+      font-weight: bold;
+    }
+    
+    /* スタッフロール（エンドロール）画面 - スクロール問題修正 */
+    .staff-roll-modal {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, #1a0b2e 0%, #2b1055 50%, #0d061a 100%);
+      color: #fff;
+      border-radius: 28px;
+      z-index: 20;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+    }
+    .staff-roll-modal.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .roll-header {
+      padding: 15px 10px 10px;
+      width: 100%;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(5px);
+      z-index: 5;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+    .roll-header h2 {
+      font-size: 20px;
+      color: #ffd166;
+      text-shadow: 0 0 8px rgba(255, 209, 102, 0.6);
+    }
+    
+    /* スクロールエリア（自動・手動両対応） */
+    .roll-container {
+      flex: 1;
+      width: 100%;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+      position: relative;
+      padding: 20px 22px;
+      -webkit-overflow-scrolling: touch;
+    }
+    /* カスタムスクロールバー */
+    .roll-container::-webkit-scrollbar {
+      width: 6px;
+    }
+    .roll-container::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .roll-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 209, 102, 0.4);
+      border-radius: 3px;
+    }
+
+    .roll-content {
+      width: 100%;
+      text-align: center;
+      padding-top: 10px;
+      padding-bottom: 40px;
+    }
+
+    .company-card {
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      text-align: left;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transition: transform 0.2s ease;
+    }
+    .company-card:hover {
+      transform: translateX(3px);
+      background: rgba(255, 255, 255, 0.14);
+    }
+    .company-name {
+      font-size: 16px;
+      font-weight: bold;
+      color: #70d6ff;
+      margin-bottom: 4px;
+    }
+    .company-meta {
+      font-size: 12px;
+      color: #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .company-tag {
+      background: rgba(255, 209, 102, 0.2);
+      color: #ffd166;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+    }
+    .roll-footer {
+      padding: 12px;
+      width: 100%;
+      background: rgba(0,0,0,0.6);
+      z-index: 5;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>✨ ユニコーンゲットだぜ！ ✨</h1>
+    
+    <div class="status-bar">
+      <div class="status-item">時間: <span id="timer" class="highlight">30</span> 秒</div>
+      <div class="status-item">獲得: <span id="score" class="highlight">0 億ドル</span></div>
+      <button class="reset-btn" id="reset-btn">もう一度あそぶ</button>
+    </div>
+
+    <div class="grid" id="grid">
+      <div class="hole" data-index="0">
+        <div class="egg-container">
+          <div class="egg-top"></div>
+          <div class="mole">🦄</div>
+          <div class="egg-bottom"></div>
+        </div>
+      </div>
+      <div class="hole" data-index="1">
+        <div class="egg-container">
+          <div class="egg-top"></div>
+          <div class="mole">🦄</div>
+          <div class="egg-bottom"></div>
+        </div>
+      </div>
+      <div class="hole" data-index="2">
+        <div class="egg-container">
+          <div class="egg-top"></div>
+          <div class="mole">🦄</div>
+          <div class="egg-bottom"></div>
+        </div>
+      </div>
+      <div class="hole" data-index="3">
+        <div class="egg-container">
+          <div class="egg-top"></div>
+          <div class="mole">🦄</div>
+          <div class="egg-bottom"></div>
+        </div>
+      </div>
+      <div class="hole" data-index="4">
+        <div class="egg-container">
+          <div class="egg-top"></div>
+          <div class="mole">🦄</div>
+          <div class="egg-bottom"></div>
+        </div>
+      </div>
+      <div class="hole" data-index="5">
+        <div class="egg-container">
+          <div class="egg-top"></div>
+          <div class="mole">🦄</div>
+          <div class="egg-bottom"></div>
+        </div>
+      </div>
+      <div class="hole" data-index="6">
+        <div class="egg-container">
+          <div class="egg-top"></div>
+          <div class="mole">🦄</div>
+          <div class="egg-bottom"></div>
+        </div>
+      </div>
+      <div class="hole" data-index="7">
+        <div class="egg-container">
+          <div class="egg-top"></div>
+          <div class="mole">🦄</div>
+          <div class="egg-bottom"></div>
+        </div>
+      </div>
+      <div class="hole" data-index="8">
+        <div class="egg-container">
+          <div class="egg-top"></div>
+          <div class="mole">🦄</div>
+          <div class="egg-bottom"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- タイムアップ時モーダル -->
+    <div class="game-over-modal" id="game-over-modal">
+      <div class="game-over-title">🎉 タイムアップ！ 🎉</div>
+      <div class="game-over-score">
+        獲得金額: <span id="final-score" style="color: #ff4081;">0 億ドル</span><br>
+        <span id="final-count" style="font-size: 16px; color: #555;">(ユニコーン 0 頭ゲット)</span>
+      </div>
+      <button class="reset-btn" id="show-roll-btn" style="font-size: 17px; padding: 12px 24px; margin-bottom: 12px; background: linear-gradient(45deg, #7b1fa2, #ae52d4);">
+        🦄 発掘ユニコーン企業 スタッフロールを見る
+      </button>
+      <button class="reset-btn" id="modal-reset-btn" style="font-size: 15px; padding: 8px 20px; background: #888;">もう一度あそぶ</button>
+    </div>
+
+    <!-- スタッフロール（エンドロール）画面 -->
+    <div class="staff-roll-modal" id="staff-roll-modal">
+      <div class="roll-header">
+        <h2>🦄 ゲットしたユニコーン企業リスト 🦄</h2>
+        <div id="roll-subtext" style="font-size: 13px; color: #ffd166; margin-top: 3px;"></div>
+      </div>
+      
+      <div class="roll-container" id="roll-container">
+        <div class="roll-content" id="roll-content">
+          <!-- JSで動的生成 -->
+        </div>
+      </div>
+
+      <div class="roll-footer">
+        <button class="reset-btn" id="roll-reset-btn" style="font-size: 16px; padding: 10px 24px;">もう一度あそぶ</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // SEC Form D (2026-2Q) 分析による将来のユニコーン企業40社データ
+    const UNICORN_COMPANIES = [
+      { name: "Baseten Labs, Inc.", industry: "AI & ML Infrastructure", location: "San Francisco, CA", amount: "$1.10B" },
+      { name: "Saronic Technologies, Inc.", industry: "Autonomous Systems", location: "Austin, TX", amount: "$1.02B" },
+      { name: "Superhuman Platform Inc.", industry: "AI Productivity Platform", location: "San Francisco, CA", amount: "$1.02B" },
+      { name: "Ineffable Intelligence Ltd", industry: "Advanced AI Models", location: "London, UK", amount: "$1.10B" },
+      { name: "Fluidstack Ltd", industry: "GPU Cloud Computing", location: "London, UK", amount: "$842.5M" },
+      { name: "SignalCraft Analytics Group Inc.", industry: "Security Token & Data", location: "New York, NY", amount: "$100.0M" },
+      { name: "Madison Air Solutions Corp", industry: "Clean Air Tech", location: "Chicago, IL", amount: "$10.87B" },
+      { name: "Multi-Color Corp", industry: "Smart Packaging Tech", location: "Atlanta, GA", amount: "$1.30B" },
+      { name: "Phoenix Energy One, LLC", industry: "Clean Energy Tech", location: "Irvine, CA", amount: "$1.14B" },
+      { name: "AgriVest Farmland Fund", industry: "AgTech & Smart Farming", location: "Hartford, CT", amount: "$1.38B" },
+      { name: "Prologis Logistics Tech", industry: "Supply Chain & Real Estate Tech", location: "San Francisco, CA", amount: "$18.22B" },
+      { name: "Fortress Credit Realty Income", industry: "FinTech & Real Estate", location: "New York, NY", amount: "$1.33B" },
+      { name: "Greystar Equity Partners Europe", industry: "PropTech Solutions", location: "Luxembourg", amount: "$2.48B" },
+      { name: "Howard Hughes Holdings", industry: "Smart City Infrastructure", location: "The Woodlands, TX", amount: "$1.00B" },
+      { name: "Invesco Commercial Tech", industry: "FinTech & Finance", location: "Dallas, TX", amount: "$922.6M" },
+      { name: "OptCapital LLC", industry: "Next-Gen Financial Services", location: "Charlotte, NC", amount: "$1.77B" },
+      { name: "Unshackled Ventures Colorado", industry: "Early-Stage Tech Incubator", location: "Lafayette, CA", amount: "$50.0M" },
+      { name: "NorthPoint Industrial Tech", industry: "Industrial Automation", location: "Kansas City, MO", amount: "$1.27B" },
+      { name: "KKR Next-Gen Infrastructure", industry: "Sustainable Infra Tech", location: "New York, NY", amount: "$7.44B" },
+      { name: "Goldman Sachs Private Credit", industry: "Alternative Finance Tech", location: "New York, NY", amount: "$9.90B" },
+      { name: "Dillard's Retail Innovation", industry: "E-Commerce Tech", location: "Little Rock, AR", amount: "$2.39B" },
+      { name: "Nationwide Private Placement", industry: "InsurTech Platform", location: "Columbus, OH", amount: "$10.07B" },
+      { name: "Pruco Life Insurance Tech", industry: "Biotech & Health InsurTech", location: "Newark, NJ", amount: "$4.21B" },
+      { name: "NHIT Strategic Alpha", industry: "Algorithmic Trading Tech", location: "Boston, MA", amount: "$4.79B" },
+      { name: "MLG Legacy Commercial", industry: "Commercial PropTech", location: "Brookfield, WI", amount: "$937.7M" },
+      { name: "Ninety One Global Select", industry: "Global Emerging Markets Tech", location: "New York, NY", amount: "$1.29B" },
+      { name: "Capital Fund II Tech", industry: "Real Estate Analytics", location: "Scottsdale, AZ", amount: "$1.01B" },
+      { name: "EQT Private Equity Group", industry: "Tech Investment & Growth", location: "New York, NY", amount: "$788.1M" },
+      { name: "AP Emma Co-Invest", industry: "DeepTech Innovation", location: "New York, NY", amount: "$500.0M" },
+      { name: "NHIT Credit Asset Trust", industry: "Credit Risk Analytics", location: "Boston, MA", amount: "$3.97B" },
+      { name: "Greystar Residential Tech", industry: "Smart Housing Tech", location: "Luxembourg", amount: "$1.50B" },
+      { name: "Fortress Net Lease Tech", industry: "Asset Digitization", location: "New York, NY", amount: "$1.78B" },
+      { name: "NHIT MultiSector Discretion", industry: "Macro Analytics Platform", location: "Boston, MA", amount: "$2.91B" },
+      { name: "Prologis European Logistics", industry: "Green Supply Chain", location: "Luxembourg", amount: "$11.37B" },
+      { name: "Nationwide BOLI Account", industry: "InsurTech Data Hub", location: "Columbus, OH", amount: "$6.05B" },
+      { name: "Prologis China Core Logistics", industry: "Cross-Border Logistics AI", location: "Singapore", amount: "$1.83B" },
+      { name: "NHIT Agency MBS Trust", industry: "Mortgage Data Analytics", location: "Boston, MA", amount: "$6.65B" },
+      { name: "KKR Private Equity Conglomerate", industry: "Global Tech Expansion", location: "New York, NY", amount: "$10.16B" },
+      { name: "NHIT Core Disciplined Alpha", industry: "AI Quantitative Investment", location: "Boston, MA", amount: "$1.62B" },
+      { name: "NHIT Core Plus Fixed Income", industry: "Fixed Income FinTech", location: "Boston, MA", amount: "$4.05B" }
+    ];
+
+    const holes = document.querySelectorAll('.hole');
+    const scoreDisplay = document.getElementById('score');
+    const timerDisplay = document.getElementById('timer');
+    const resetBtn = document.getElementById('reset-btn');
+    const modalResetBtn = document.getElementById('modal-reset-btn');
+    const rollResetBtn = document.getElementById('roll-reset-btn');
+    const showRollBtn = document.getElementById('show-roll-btn');
+    
+    const gameOverModal = document.getElementById('game-over-modal');
+    const staffRollModal = document.getElementById('staff-roll-modal');
+    const finalScoreDisplay = document.getElementById('final-score');
+    const finalCountDisplay = document.getElementById('final-count');
+    const rollSubtext = document.getElementById('roll-subtext');
+    const rollContainer = document.getElementById('roll-container');
+    const rollContent = document.getElementById('roll-content');
+
+    const GAME_TIME = 30; // 制限時間 30秒
+    let scoreInBillions = 0; // 単位：億ドル
+    let caughtCount = 0; // ゲットした頭数
+    let timeLeft = GAME_TIME;
+    let lastHole;
+    let timeUp = false;
+    let moleTimerId = null;
+    let countdownIntervalId = null;
+    let scrollIntervalId = null;
+
+    function formatScore(billions) {
+      if (billions === 0) return '0 億ドル';
+      return `${billions} 億ドル`;
+    }
+
+    function randomTime(min, max) {
+      return Math.round(Math.random() * (max - min) + min);
+    }
+
+    function randomHole(holes) {
+      const idx = Math.floor(Math.random() * holes.length);
+      const hole = holes[idx];
+      if (hole === lastHole) {
+        return randomHole(holes);
+      }
+      lastHole = hole;
+      return hole;
+    }
+
+    function popUp() {
+      if (timeUp) return;
+      const time = randomTime(800, 1600);
+      const hole = randomHole(holes);
+      hole.classList.add('up');
+      
+      moleTimerId = setTimeout(() => {
+        hole.classList.remove('up');
+        if (!timeUp) popUp();
+      }, time);
+    }
+
+    function startTimer() {
+      timeLeft = GAME_TIME;
+      timerDisplay.textContent = timeLeft;
+      timerDisplay.classList.remove('timer-danger');
+      clearInterval(countdownIntervalId);
+
+      countdownIntervalId = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = timeLeft;
+
+        if (timeLeft <= 5) {
+          timerDisplay.classList.add('timer-danger');
+        }
+
+        if (timeLeft <= 0) {
+          clearInterval(countdownIntervalId);
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function startGame() {
+      scoreInBillions = 0;
+      caughtCount = 0;
+      scoreDisplay.textContent = formatScore(scoreInBillions);
+      timeUp = false;
+      clearTimeout(moleTimerId);
+      clearInterval(scrollIntervalId);
+      gameOverModal.classList.remove('show');
+      staffRollModal.classList.remove('show');
+      holes.forEach(hole => hole.classList.remove('up'));
+      
+      startTimer();
+      popUp();
+    }
+
+    function endGame() {
+      timeUp = true;
+      clearTimeout(moleTimerId);
+      holes.forEach(hole => hole.classList.remove('up'));
+      finalScoreDisplay.textContent = formatScore(scoreInBillions);
+      finalCountDisplay.textContent = `(ユニコーン ${caughtCount} 頭ゲット)`;
+      gameOverModal.classList.add('show');
+    }
+
+    function buildStaffRoll() {
+      // 捕まえたユニコーンの数（最小1社〜最大40社）
+      const count = Math.min(Math.max(caughtCount, 1), UNICORN_COMPANIES.length);
+      const unlockedCompanies = UNICORN_COMPANIES.slice(0, count);
+
+      rollSubtext.textContent = `${caughtCount} 頭ゲット！ 全 ${unlockedCompanies.length} 社が解禁されました (スクロールで全社閲覧可能)`;
+
+      let html = `<div style="font-size: 14px; color: #a8ebd9; margin-bottom: 20px; line-height: 1.5;">
+        【 SEC Form D (2026-2Q) 分析レポート 】<br>
+        あなたが発掘した将来のユニコーン企業 (${unlockedCompanies.length} / 40社)
+      </div>`;
+
+      unlockedCompanies.forEach((comp, idx) => {
+        html += `
+          <div class="company-card">
+            <div class="company-name">#${idx + 1} ${comp.name}</div>
+            <div class="company-meta">
+              <span>📍 ${comp.location}</span>
+              <span class="company-tag">${comp.industry}</span>
+            </div>
+            <div style="font-size: 11px; color: #ffd166; margin-top: 5px; font-weight: bold;">
+              💰 調達/評価規模: ${comp.amount}
+            </div>
+          </div>
+        `;
+      });
+
+      if (count < UNICORN_COMPANIES.length) {
+        html += `
+          <div style="margin: 25px 0 30px; font-size: 13px; color: #ff80ab; background: rgba(255,128,171,0.1); padding: 12px; border-radius: 10px;">
+            🔒 残り ${UNICORN_COMPANIES.length - count} 社のユニコーン企業が未解放です！<br>
+            さらに多くのユニコーンをゲットして全40社解禁を目指そう！
+          </div>
+        `;
+      } else {
+        html += `
+          <div style="margin: 25px 0 30px; font-size: 15px; color: #ffd166; font-weight: bold; background: rgba(255,209,102,0.15); padding: 12px; border-radius: 10px;">
+            🏆 祝！ 全 40 社のユニコーン企業をコンプリート！ 🏆
+          </div>
+        `;
+      }
+
+      rollContent.innerHTML = html;
+
+      gameOverModal.classList.remove('show');
+      staffRollModal.classList.add('show');
+
+      // スクロール位置を一番上に初期化し、なめらかな自動スクロールを開始
+      rollContainer.scrollTop = 0;
+      clearInterval(scrollIntervalId);
+
+      // 自動スクロール処理 (ユーザーの手動スクロールも妨げない)
+      scrollIntervalId = setInterval(() => {
+        if (rollContainer.scrollTop < rollContainer.scrollHeight - rollContainer.clientHeight) {
+          rollContainer.scrollTop += 1;
+        } else {
+          clearInterval(scrollIntervalId);
+        }
+      }, 40);
+    }
+
+    function bonk(e) {
+      const hole = this;
+      if (!hole.classList.contains('up') || timeUp) return;
+      
+      // 1匹ゲットにつき 10億ドル 加算 & 頭数+1
+      scoreInBillions += 10;
+      caughtCount += 1;
+      scoreDisplay.textContent = formatScore(scoreInBillions);
+      hole.classList.remove('up');
+
+      const mole = hole.querySelector('.mole');
+      mole.classList.add('hit');
+      setTimeout(() => mole.classList.remove('hit'), 350);
+    }
+
+    holes.forEach(hole => hole.addEventListener('click', bonk));
+    resetBtn.addEventListener('click', startGame);
+    modalResetBtn.addEventListener('click', startGame);
+    rollResetBtn.addEventListener('click', startGame);
+    showRollBtn.addEventListener('click', buildStaffRoll);
+
+    // 初回スタート
+    startGame();
+  </script>
+</body>
+</html>
