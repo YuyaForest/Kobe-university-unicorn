@@ -56,6 +56,12 @@ SEC Form D の実データ分析と連動した、単一ファイル構成のキ
 
 ---
 
+## スクリーンショット
+
+![スクリーンショット](ScreenShot2026-08-08.png)
+
+---
+
 ## 📄 ライセンス
 
 This project is licensed under the MIT License.
